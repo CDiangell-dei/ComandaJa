@@ -19,7 +19,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }) {
   const [tableNumber, setTableNumber] = useState('');
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.PIX);
   const [notes, setNotes] = useState('');
-  const [pendingOrder, setPendingOrder] = useState(null);
+  const [draftOrder, setDraftOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
@@ -31,29 +31,35 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }) {
       return;
     }
 
+    const orderPayload = {
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      orderType,
+      tableNumber: orderType === ORDER_TYPES.DINE_IN ? (tableNumber.trim() || 'Mesa Balcão') : 'Para Viagem',
+      items: cart,
+      subtotal: cartTotal,
+      paymentMethod,
+      notes: notes.trim(),
+    };
+
+    // No caso do Pix, NÃO cria a comanda no banco ainda: apenas prepara os dados para o QR Code
+    if (paymentMethod === PAYMENT_METHODS.PIX) {
+      setDraftOrder(orderPayload);
+      setStep('PIX');
+      return;
+    }
+
+    // Se for pagamento no balcão, cria a comanda diretamente
     setIsSubmitting(true);
     try {
       const newOrder = await createOrder({
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
-        orderType,
-        tableNumber: orderType === ORDER_TYPES.DINE_IN ? (tableNumber.trim() || 'Mesa Balcão') : 'Para Viagem',
-        items: cart,
-        subtotal: cartTotal,
-        paymentMethod,
-        paymentStatus: paymentMethod === PAYMENT_METHODS.PIX ? 'PENDING' : 'PENDING',
-        notes: notes.trim(),
+        ...orderPayload,
+        paymentStatus: 'PENDING',
       });
 
-      setPendingOrder(newOrder);
-
-      if (paymentMethod === PAYMENT_METHODS.PIX) {
-        setStep('PIX');
-      } else {
-        clearCart();
-        onSuccess(newOrder);
-        onClose();
-      }
+      clearCart();
+      onSuccess(newOrder);
+      onClose();
     } catch (err) {
       console.error('Checkout error:', err);
       alert('Ocorreu um erro ao processar seu pedido. Tente novamente.');
@@ -62,12 +68,25 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  // Cria a comanda no Supabase E envia para a cozinha APENAS após o Pix ser confirmado!
   const handlePixConfirmed = async () => {
-    if (pendingOrder) {
-      await updatePaymentStatus(pendingOrder.id, 'PAID');
+    if (!draftOrder) return;
+
+    setIsSubmitting(true);
+    try {
+      const newOrder = await createOrder({
+        ...draftOrder,
+        paymentStatus: 'PAID',
+      });
+
       clearCart();
-      onSuccess(pendingOrder);
+      onSuccess(newOrder);
       onClose();
+    } catch (err) {
+      console.error('Erro ao registrar comanda após Pix:', err);
+      alert('Erro ao registrar pedido. Por favor, tente novamente.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -269,7 +288,7 @@ export default function CheckoutModal({ isOpen, onClose, onSuccess }) {
             </form>
           ) : (
             <PixPaymentStep
-              orderData={pendingOrder}
+              orderData={draftOrder}
               storeSettings={settings}
               onPaymentConfirmed={handlePixConfirmed}
               onCancel={() => setStep('FORM')}

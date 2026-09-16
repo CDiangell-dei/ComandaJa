@@ -146,6 +146,7 @@ function AppContent() {
                       key={item.id}
                       item={item}
                       onSelect={handleOpenCustomizer}
+                      onDirectAdd={(item) => addToCart(item)}
                     />
                   ))}
                 </div>

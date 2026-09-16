@@ -1,21 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, Check, Sliders } from 'lucide-react';
 import { formatCurrency } from '../../utils/formatters';
 
-export default function MenuItemCard({ item, onSelect }) {
+export default function MenuItemCard({ item, onSelect, onDirectAdd }) {
+  const [justAdded, setJustAdded] = useState(false);
   const isAvailable = item.available !== false;
+
+  const handleAction = (e) => {
+    e.stopPropagation();
+    if (!isAvailable) return;
+
+    if (item.customizable) {
+      onSelect(item);
+    } else {
+      if (onDirectAdd) {
+        onDirectAdd(item);
+        setJustAdded(true);
+        setTimeout(() => setJustAdded(false), 1200);
+      } else {
+        onSelect(item);
+      }
+    }
+  };
+
+  const handleCardClick = () => {
+    if (!isAvailable) return;
+    if (item.customizable) {
+      onSelect(item);
+    } else if (onDirectAdd) {
+      onDirectAdd(item);
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1200);
+    } else {
+      onSelect(item);
+    }
+  };
 
   return (
     <div
-      onClick={() => isAvailable && onSelect(item)}
-      className={`group bg-white rounded-3xl overflow-hidden border border-stone-200/80 shadow-card transition-all duration-300 flex flex-col justify-between ${
+      onClick={handleCardClick}
+      className={`group bg-white rounded-3xl overflow-hidden border border-stone-200/80 shadow-card transition-all duration-300 flex flex-col justify-between select-none ${
         isAvailable
-          ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer'
+          ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer active:scale-[0.99]'
           : 'opacity-60 cursor-not-allowed filter grayscale'
       }`}
     >
       {/* Imagem do Produto com Badge */}
-      <div className="relative h-44 w-full overflow-hidden bg-stone-100">
+      <div className="relative h-40 sm:h-44 w-full overflow-hidden bg-stone-100">
         <img
           src={item.image}
           alt={item.name}
@@ -25,7 +56,7 @@ export default function MenuItemCard({ item, onSelect }) {
           loading="lazy"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
         {/* Badge do Item */}
         {item.badge && isAvailable && (
@@ -41,8 +72,7 @@ export default function MenuItemCard({ item, onSelect }) {
         )}
 
         {/* Preço sobre a imagem em destaque */}
-        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-2xl shadow-md border border-white/50">
-          <span className="text-xs text-stone-500 font-semibold mr-1">a partir de</span>
+        <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2.5 sm:px-3 py-1 rounded-2xl shadow-md border border-white/50">
           <span className="font-extrabold text-sm sm:text-base text-amber-700">
             {formatCurrency(item.price)}
           </span>
@@ -62,22 +92,33 @@ export default function MenuItemCard({ item, onSelect }) {
 
         {/* Botão de Adicionar / Personalizar */}
         <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-          <div className="text-xs text-stone-400 font-medium">
-            {item.customizable ? 'Opções & Adicionais' : 'Item pronto'}
+          <div className="text-[11px] text-stone-400 font-medium">
+            {item.customizable ? 'Com opções' : 'Item pronto'}
           </div>
 
           <button
+            type="button"
+            onClick={handleAction}
             disabled={!isAvailable}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs font-bold transition-all shadow-xs ${
-              isAvailable
+              !isAvailable
+                ? 'bg-stone-200 text-stone-400'
+                : justAdded
+                ? 'bg-emerald-600 text-white scale-105'
+                : item.customizable
                 ? 'bg-amber-50 text-amber-800 hover:bg-amber-500 hover:text-white group-hover:bg-amber-500 group-hover:text-white'
-                : 'bg-stone-200 text-stone-400'
+                : 'bg-amber-500 text-white hover:bg-amber-600'
             }`}
           >
-            {item.customizable ? (
+            {justAdded ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Adicionado!</span>
+              </>
+            ) : item.customizable ? (
               <>
                 <Sliders className="w-3.5 h-3.5" />
-                <span>Montar</span>
+                <span>Personalizar</span>
               </>
             ) : (
               <>

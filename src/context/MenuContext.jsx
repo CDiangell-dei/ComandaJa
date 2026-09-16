@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
   pixReceiverName: 'MARIA LUCILENE DE JESUS CHAVES',
   pixCity: 'MANAUS',
   avgWaitTimeMinutes: 15,
+  kitchenPin: '1234',
 };
 
 export function MenuProvider({ children }) {
@@ -61,6 +62,7 @@ export function MenuProvider({ children }) {
               pixReceiverName: settingsData.pix_receiver_name || DEFAULT_SETTINGS.pixReceiverName,
               pixCity: settingsData.pix_city || DEFAULT_SETTINGS.pixCity,
               avgWaitTimeMinutes: settingsData.avg_wait_time_minutes || 15,
+              kitchenPin: settingsData.kitchen_pin || '1234',
             });
           }
         } catch (err) {
@@ -165,6 +167,7 @@ export function MenuProvider({ children }) {
             pix_receiver_name: newSettings.pixReceiverName,
             pix_city: newSettings.pixCity,
             avg_wait_time_minutes: newSettings.avgWaitTimeMinutes,
+            kitchen_pin: newSettings.kitchenPin,
             updated_at: new Date().toISOString(),
           })
           .eq('id', 'default');

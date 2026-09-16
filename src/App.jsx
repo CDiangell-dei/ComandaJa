@@ -12,6 +12,7 @@ import DigitalTicket from './components/customer/DigitalTicket';
 import KitchenDashboard from './components/kitchen/KitchenDashboard';
 import PasswordCallScreen from './components/display/PasswordCallScreen';
 import MenuManagerModal from './components/admin/MenuManagerModal';
+import PinAuthModal from './components/common/PinAuthModal';
 import { Sparkles, Phone, Clock, ChefHat, Tv, SlidersHorizontal, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from './utils/formatters';
 
@@ -28,7 +29,20 @@ function getTabFromUrl() {
 }
 
 function AppContent() {
-  const [currentTab, setCurrentTab] = useState(getTabFromUrl);
+  const [isKitchenUnlocked, setIsKitchenUnlocked] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem('comandaja_kitchen_auth') === 'true';
+  });
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [pendingAuthTarget, setPendingAuthTarget] = useState(null); // 'kitchen' | 'admin'
+
+  const [currentTab, setCurrentTab] = useState(() => {
+    const tab = getTabFromUrl();
+    const unlocked = typeof window !== 'undefined' && sessionStorage.getItem('comandaja_kitchen_auth') === 'true';
+    if (tab === 'kitchen' && !unlocked) return 'menu';
+    return tab;
+  });
+
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [customizingItem, setCustomizingItem] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -39,21 +53,78 @@ function AppContent() {
   const { cartCount, cartTotal, addToCart } = useCart();
   const { currentOrder, setCurrentOrderId } = useOrders();
 
+  // Se iniciou direto com #cozinha mas sem senha, abre o PIN modal
+  useEffect(() => {
+    const tab = getTabFromUrl();
+    if (tab === 'kitchen' && !isKitchenUnlocked) {
+      setPendingAuthTarget('kitchen');
+      setIsPinModalOpen(true);
+    }
+  }, []);
+
   // Escuta alterações na URL (#cozinha, #telao, etc.)
   useEffect(() => {
     const handleHashChange = () => {
-      setCurrentTab(getTabFromUrl());
+      const tab = getTabFromUrl();
+      if (tab === 'kitchen' && !isKitchenUnlocked) {
+        setPendingAuthTarget('kitchen');
+        setIsPinModalOpen(true);
+        setCurrentTab('menu');
+      } else {
+        setCurrentTab(tab);
+      }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [isKitchenUnlocked]);
 
   const handleNavigate = (tab) => {
+    if (tab === 'kitchen' && !isKitchenUnlocked) {
+      requestAccess('kitchen');
+      return;
+    }
     setCurrentTab(tab);
     if (tab === 'kitchen') window.location.hash = 'cozinha';
     else if (tab === 'tv') window.location.hash = 'telao';
     else if (tab === 'ticket') window.location.hash = 'comanda';
     else window.location.hash = '';
+  };
+
+  const requestAccess = (target) => {
+    if (isKitchenUnlocked) {
+      if (target === 'kitchen') handleNavigate('kitchen');
+      else if (target === 'admin') setIsAdminOpen(true);
+    } else {
+      setPendingAuthTarget(target);
+      setIsPinModalOpen(true);
+    }
+  };
+
+  const handlePinSuccess = () => {
+    sessionStorage.setItem('comandaja_kitchen_auth', 'true');
+    setIsKitchenUnlocked(true);
+    setIsPinModalOpen(false);
+    if (pendingAuthTarget === 'admin') {
+      setIsAdminOpen(true);
+    } else {
+      setCurrentTab('kitchen');
+      window.location.hash = 'cozinha';
+    }
+    setPendingAuthTarget(null);
+  };
+
+  const handlePinClose = () => {
+    setIsPinModalOpen(false);
+    setPendingAuthTarget(null);
+    if (currentTab === 'kitchen' && !isKitchenUnlocked) {
+      handleNavigate('menu');
+    }
+  };
+
+  const handleLockKitchen = () => {
+    sessionStorage.removeItem('comandaja_kitchen_auth');
+    setIsKitchenUnlocked(false);
+    handleNavigate('menu');
   };
 
   // Filtrar itens da categoria selecionada
@@ -99,7 +170,8 @@ function AppContent() {
         currentTab={currentTab}
         setCurrentTab={handleNavigate}
         onOpenCart={() => setIsCartOpen(true)}
-        onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAdmin={() => requestAccess('admin')}
+        onLockKitchen={handleLockKitchen}
       />
 
       {/* Conteúdo Principal */}
@@ -189,7 +261,7 @@ function AppContent() {
               {/* Links da Cozinha e Telão para a Equipe */}
               <div className="pt-2 flex items-center justify-center gap-3">
                 <button
-                  onClick={() => handleNavigate('kitchen')}
+                  onClick={() => requestAccess('kitchen')}
                   className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-stone-900 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs transition-colors"
                 >
                   <ChefHat className="w-3.5 h-3.5 text-orange-600" />
@@ -209,7 +281,7 @@ function AppContent() {
         )}
 
         {/* 3. PAINEL DA COZINHA (KDS) */}
-        {currentTab === 'kitchen' && (
+        {currentTab === 'kitchen' && isKitchenUnlocked && (
           <div className="w-full max-w-full overflow-x-hidden">
             <KitchenDashboard />
           </div>
@@ -285,6 +357,12 @@ function AppContent() {
       <MenuManagerModal
         isOpen={isAdminOpen}
         onClose={() => setIsAdminOpen(false)}
+      />
+
+      <PinAuthModal
+        isOpen={isPinModalOpen}
+        onClose={handlePinClose}
+        onSuccess={handlePinSuccess}
       />
     </div>
   );

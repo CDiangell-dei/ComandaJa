@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, SlidersHorizontal, Store, DollarSign, Check, AlertCircle, Database } from 'lucide-react';
+import { X, SlidersHorizontal, Store, DollarSign, Check, AlertCircle, Database, Lock } from 'lucide-react';
 import { useMenu } from '../../context/MenuContext';
 import { formatCurrency } from '../../utils/formatters';
 
@@ -14,6 +14,7 @@ export default function MenuManagerModal({ isOpen, onClose }) {
   const [pixReceiverName, setPixReceiverName] = useState(settings.pixReceiverName);
   const [pixCity, setPixCity] = useState(settings.pixCity);
   const [avgWaitTimeMinutes, setAvgWaitTimeMinutes] = useState(settings.avgWaitTimeMinutes);
+  const [kitchenPin, setKitchenPin] = useState(settings.kitchenPin || '1234');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   if (!isOpen) return null;
@@ -27,6 +28,7 @@ export default function MenuManagerModal({ isOpen, onClose }) {
       pixReceiverName,
       pixCity,
       avgWaitTimeMinutes: parseInt(avgWaitTimeMinutes, 10) || 15,
+      kitchenPin: kitchenPin.trim() || '1234',
     });
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 2500);
@@ -230,6 +232,27 @@ export default function MenuManagerModal({ isOpen, onClose }) {
                     className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-sm font-medium text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
                   />
                 </div>
+              </div>
+
+              {/* Senha da Cozinha & Admin */}
+              <div className="pt-3 border-t border-stone-200">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Lock className="w-4 h-4 text-amber-600" />
+                  <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">
+                    Senha de Acesso da Cozinha & Gerenciamento (PIN)
+                  </label>
+                </div>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={kitchenPin}
+                  onChange={(e) => setKitchenPin(e.target.value)}
+                  placeholder="1234"
+                  className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base font-black tracking-widest text-stone-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+                <p className="text-[11px] text-stone-500 mt-1">
+                  Esta senha de 4 dígitos protege o painel da cozinha (KDS) e esta tela de configurações para que clientes não possam acessar.
+                </p>
               </div>
 
               <div className="pt-3">

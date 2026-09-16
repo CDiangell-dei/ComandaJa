@@ -1,11 +1,11 @@
 import React from 'react';
-import { ShoppingBag, ReceiptText, ChefHat, Tv, SlidersHorizontal, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ReceiptText, ChefHat, Tv, SlidersHorizontal, ArrowLeft, Lock } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
 import { useOrders } from '../../context/OrderContext';
 import { useMenu } from '../../context/MenuContext';
 import { formatCallPassword } from '../../utils/formatters';
 
-export default function Header({ currentTab, setCurrentTab, onOpenCart, onOpenAdmin }) {
+export default function Header({ currentTab, setCurrentTab, onOpenCart, onOpenAdmin, onLockKitchen }) {
   const { cartCount } = useCart();
   const { currentOrder } = useOrders();
   const { settings } = useMenu();
@@ -67,12 +67,21 @@ export default function Header({ currentTab, setCurrentTab, onOpenCart, onOpenAd
                 </button>
 
                 <button
+                  onClick={onLockKitchen}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-rose-100 text-stone-500 hover:text-rose-700 text-xs font-bold transition-all"
+                  title="Bloquear Cozinha (Sair)"
+                >
+                  <Lock className="w-4 h-4" />
+                  <span className="hidden sm:inline">Bloquear</span>
+                </button>
+
+                <button
                   onClick={() => setCurrentTab('menu')}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs"
                   title="Ver Cardápio do Cliente"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span className="hidden sm:inline">Ver Cardápio</span>
+                  <span className="hidden sm:inline">Cardápio</span>
                 </button>
               </div>
             ) : (

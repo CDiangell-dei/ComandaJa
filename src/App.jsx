@@ -48,7 +48,7 @@ function AppContent() {
   // Se a aba for o Telão de TV, renderiza o painel de tela cheia
   if (currentTab === 'tv') {
     return (
-      <div className="relative">
+      <div className="relative w-full max-w-full overflow-x-hidden">
         <div className="fixed top-4 right-4 z-50">
           <button
             onClick={() => setCurrentTab('menu')}
@@ -63,7 +63,7 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col selection:bg-amber-200 selection:text-amber-900">
+    <div className="min-h-screen bg-stone-50 flex flex-col selection:bg-amber-200 selection:text-amber-900 w-full max-w-full overflow-x-hidden">
       {/* Header Principal com seletor de módulos */}
       <Header
         currentTab={currentTab}
@@ -78,26 +78,26 @@ function AppContent() {
       />
 
       {/* Conteúdo da Aba Selecionada */}
-      <main className="flex-1 pb-24 sm:pb-12">
+      <main className="flex-1 pb-24 sm:pb-12 w-full max-w-full overflow-x-hidden">
         {currentTab === 'menu' && (
-          <div>
+          <div className="w-full max-w-full overflow-x-hidden">
             {/* Banner de Boas-Vindas da Pastelaria */}
-            <section className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white py-8 px-4 sm:px-6 shadow-sm">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-bold tracking-wide mb-3">
+            <section className="bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 text-white py-6 sm:py-8 px-4 sm:px-6 shadow-sm w-full max-w-full overflow-hidden">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+                <div className="w-full">
+                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-bold tracking-wide mb-2.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-200" />
                     <span>Cardápio Digital Oficial</span>
                   </div>
                   <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
                     {settings.storeName}
                   </h1>
-                  <p className="text-sm sm:text-base text-amber-100 mt-1 max-w-xl">
+                  <p className="text-xs sm:text-base text-amber-100 mt-1 max-w-xl">
                     {settings.storeSubtitle}
                   </p>
 
                   {/* Informações de Contato e Pedido */}
-                  <div className="flex flex-wrap items-center gap-4 mt-4 text-xs font-semibold text-amber-100">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3 sm:mt-4 text-xs font-semibold text-amber-100">
                     <div className="flex items-center gap-1.5 bg-black/15 px-3 py-1.5 rounded-xl backdrop-blur-xs">
                       <Phone className="w-3.5 h-3.5 text-amber-300" />
                       <span>WhatsApp: (92) 99482-2309</span>
@@ -109,7 +109,7 @@ function AppContent() {
                   </div>
                 </div>
 
-                <div className="hidden lg:block text-right">
+                <div className="hidden lg:block text-right flex-shrink-0">
                   <div className="bg-white/10 backdrop-blur-md p-4 rounded-3xl border border-white/20 text-center">
                     <span className="text-4xl">🥟</span>
                     <span className="block text-xs font-bold text-white mt-1">Frito na Hora</span>
@@ -127,7 +127,7 @@ function AppContent() {
             />
 
             {/* Grade de Produtos */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-6 w-full max-w-full overflow-hidden">
               {menuLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-stone-400">
                   <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
@@ -140,7 +140,7 @@ function AppContent() {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
                   {filteredItems.map((item) => (
                     <MenuItemCard
                       key={item.id}
@@ -154,17 +154,21 @@ function AppContent() {
           </div>
         )}
 
-        {currentTab === 'kitchen' && <KitchenDashboard />}
+        {currentTab === 'kitchen' && (
+          <div className="w-full max-w-full overflow-x-hidden">
+            <KitchenDashboard />
+          </div>
+        )}
 
         {currentTab === 'ticket' && (
-          <div className="py-6">
+          <div className="py-6 px-3 sm:px-6 w-full max-w-full overflow-x-hidden">
             {currentOrder ? (
               <DigitalTicket
                 order={currentOrder}
                 onNewOrder={handleStartNewOrder}
               />
             ) : (
-              <div className="max-w-md mx-auto text-center p-12 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
+              <div className="max-w-md mx-auto text-center p-8 sm:p-12 bg-white rounded-3xl border border-stone-200 shadow-sm space-y-4">
                 <span className="text-4xl">📋</span>
                 <h3 className="font-bold text-lg text-stone-800">Nenhuma comanda ativa</h3>
                 <p className="text-xs text-stone-500">
@@ -184,10 +188,10 @@ function AppContent() {
 
       {/* Barra Flutuante Inferior no Mobile com Carrinho */}
       {cartCount > 0 && currentTab === 'menu' && (
-        <div className="fixed bottom-4 left-4 right-4 z-40 max-w-lg mx-auto sm:hidden animate-in slide-in-from-bottom duration-300">
+        <div className="fixed bottom-4 inset-x-0 px-4 z-40 max-w-lg mx-auto sm:hidden animate-in slide-in-from-bottom duration-300 pointer-events-none">
           <button
             onClick={() => setIsCartOpen(true)}
-            className="w-full flex items-center justify-between bg-amber-500 text-white p-4 rounded-3xl shadow-xl shadow-amber-500/30 font-bold active:scale-[0.98] transition-all"
+            className="w-full flex items-center justify-between bg-amber-500 text-white p-4 rounded-3xl shadow-xl shadow-amber-500/30 font-bold active:scale-[0.98] transition-all pointer-events-auto"
           >
             <div className="flex items-center gap-2.5">
               <div className="bg-white text-amber-600 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black">

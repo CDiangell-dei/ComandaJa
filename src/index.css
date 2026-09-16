@@ -3,12 +3,34 @@
 @tailwind utilities;
 
 @layer base {
-  body {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    position: relative;
+    touch-action: pan-y; /* Garante que o scroll no celular seja estritamente vertical */
+    -webkit-overflow-scrolling: touch;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+
+  #root {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    min-height: 100vh;
   }
 }
 
-/* Custom scrollbars */
+/* Ocultar barra de rolagem horizontal mantendo scroll funcional onde necessário */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Custom scrollbars para áreas verticais */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

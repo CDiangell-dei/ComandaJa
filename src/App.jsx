@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MenuProvider, useMenu } from './context/MenuContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { OrderProvider, useOrders } from './context/OrderContext';
@@ -12,11 +12,23 @@ import DigitalTicket from './components/customer/DigitalTicket';
 import KitchenDashboard from './components/kitchen/KitchenDashboard';
 import PasswordCallScreen from './components/display/PasswordCallScreen';
 import MenuManagerModal from './components/admin/MenuManagerModal';
-import { Sparkles, Phone, Clock, ShoppingBag } from 'lucide-react';
+import { Sparkles, Phone, Clock, ChefHat, Tv, SlidersHorizontal, ArrowLeft } from 'lucide-react';
 import { formatCurrency } from './utils/formatters';
 
+function getTabFromUrl() {
+  if (typeof window === 'undefined') return 'menu';
+  const hash = window.location.hash.toLowerCase().replace('#', '');
+  const params = new URLSearchParams(window.location.search);
+  const modo = params.get('modo') || params.get('view');
+
+  if (hash === 'cozinha' || hash === 'kitchen' || modo === 'cozinha') return 'kitchen';
+  if (hash === 'telao' || hash === 'tv' || modo === 'telao') return 'tv';
+  if (hash === 'comanda' || hash === 'ticket' || modo === 'comanda') return 'ticket';
+  return 'menu';
+}
+
 function AppContent() {
-  const [currentTab, setCurrentTab] = useState('menu'); // 'menu' | 'kitchen' | 'tv' | 'ticket' | 'admin'
+  const [currentTab, setCurrentTab] = useState(getTabFromUrl);
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [customizingItem, setCustomizingItem] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -26,6 +38,23 @@ function AppContent() {
   const { items, categories, settings, loading: menuLoading } = useMenu();
   const { cartCount, cartTotal, addToCart } = useCart();
   const { currentOrder, setCurrentOrderId } = useOrders();
+
+  // Escuta alterações na URL (#cozinha, #telao, etc.)
+  useEffect(() => {
+    const handleHashChange = () => {
+      setCurrentTab(getTabFromUrl());
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleNavigate = (tab) => {
+    setCurrentTab(tab);
+    if (tab === 'kitchen') window.location.hash = 'cozinha';
+    else if (tab === 'tv') window.location.hash = 'telao';
+    else if (tab === 'ticket') window.location.hash = 'comanda';
+    else window.location.hash = '';
+  };
 
   // Filtrar itens da categoria selecionada
   const filteredItems = selectedCategory === 'todos'
@@ -37,24 +66,25 @@ function AppContent() {
   };
 
   const handleCheckoutSuccess = (createdOrder) => {
-    setCurrentTab('ticket');
+    handleNavigate('ticket');
   };
 
   const handleStartNewOrder = () => {
     setCurrentOrderId(null);
-    setCurrentTab('menu');
+    handleNavigate('menu');
   };
 
-  // Se a aba for o Telão de TV, renderiza o painel de tela cheia
+  // 1. TELÃO DE SENHAS (Exclusivo para TV / Monitor)
   if (currentTab === 'tv') {
     return (
       <div className="relative w-full max-w-full overflow-x-hidden">
         <div className="fixed top-4 right-4 z-50">
           <button
-            onClick={() => setCurrentTab('menu')}
-            className="bg-stone-800/80 hover:bg-stone-750 text-stone-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all backdrop-blur-xs border border-stone-700"
+            onClick={() => handleNavigate('menu')}
+            className="bg-stone-800/80 hover:bg-stone-750 text-stone-300 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all backdrop-blur-xs border border-stone-700 flex items-center gap-1.5"
           >
-            Sair do Telão
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Sair do Telão</span>
           </button>
         </div>
         <PasswordCallScreen />
@@ -64,21 +94,18 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col selection:bg-amber-200 selection:text-amber-900 w-full max-w-full overflow-x-hidden">
-      {/* Header Principal com seletor de módulos */}
+      {/* Header Principal */}
       <Header
         currentTab={currentTab}
-        setCurrentTab={(tab) => {
-          if (tab === 'admin') {
-            setIsAdminOpen(true);
-          } else {
-            setCurrentTab(tab);
-          }
-        }}
+        setCurrentTab={handleNavigate}
         onOpenCart={() => setIsCartOpen(true)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
-      {/* Conteúdo da Aba Selecionada */}
+      {/* Conteúdo Principal */}
       <main className="flex-1 pb-24 sm:pb-12 w-full max-w-full overflow-x-hidden">
+        
+        {/* 2. CARDÁPIO DO CLIENTE (Padrão no Index) */}
         {currentTab === 'menu' && (
           <div className="w-full max-w-full overflow-x-hidden">
             {/* Banner de Boas-Vindas da Pastelaria */}
@@ -104,7 +131,7 @@ function AppContent() {
                     </div>
                     <div className="flex items-center gap-1.5 bg-black/15 px-3 py-1.5 rounded-xl backdrop-blur-xs">
                       <Clock className="w-3.5 h-3.5 text-amber-300" />
-                      <span>Preparo rápido: ~{settings.avgWaitTimeMinutes} min</span>
+                      <span>Frito na hora: ~{settings.avgWaitTimeMinutes} min</span>
                     </div>
                   </div>
                 </div>
@@ -131,7 +158,7 @@ function AppContent() {
               {menuLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-stone-400">
                   <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-sm font-semibold mt-4">Carregando cardápio do Supabase...</p>
+                  <p className="text-sm font-semibold mt-4">Carregando cardápio...</p>
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-3xl border border-stone-200 p-8">
@@ -152,15 +179,43 @@ function AppContent() {
                 </div>
               )}
             </div>
+
+            {/* Rodapé Limpo com Acesso Discreto da Equipe da Pastelaria */}
+            <footer className="mt-16 border-t border-stone-200/80 bg-stone-100/60 py-8 px-4 text-center text-xs text-stone-500 space-y-3">
+              <p className="font-medium text-stone-600">
+                {settings.storeName} • Manaus - AM
+              </p>
+              
+              {/* Links da Cozinha e Telão para a Equipe */}
+              <div className="pt-2 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => handleNavigate('kitchen')}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-stone-900 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs transition-colors"
+                >
+                  <ChefHat className="w-3.5 h-3.5 text-orange-600" />
+                  <span>Painel da Cozinha (KDS)</span>
+                </button>
+
+                <button
+                  onClick={() => handleNavigate('tv')}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-500 hover:text-stone-900 bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs transition-colors"
+                >
+                  <Tv className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Telão de Senhas (TV)</span>
+                </button>
+              </div>
+            </footer>
           </div>
         )}
 
+        {/* 3. PAINEL DA COZINHA (KDS) */}
         {currentTab === 'kitchen' && (
           <div className="w-full max-w-full overflow-x-hidden">
             <KitchenDashboard />
           </div>
         )}
 
+        {/* 4. COMANDA DIGITAL DO CLIENTE */}
         {currentTab === 'ticket' && (
           <div className="py-6 px-3 sm:px-6 w-full max-w-full overflow-x-hidden">
             {currentOrder ? (
@@ -176,7 +231,7 @@ function AppContent() {
                   Você ainda não possui pedidos em andamento nesta sessão.
                 </p>
                 <button
-                  onClick={() => setCurrentTab('menu')}
+                  onClick={() => handleNavigate('menu')}
                   className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 px-5 rounded-2xl transition-all"
                 >
                   Abrir Cardápio

@@ -25,18 +25,25 @@ export default function Header({ currentTab, setCurrentTab, onOpenCart, onOpenAd
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center text-lg sm:text-xl shadow-md shadow-amber-500/20 group-hover:scale-105 transition-transform flex-shrink-0">
               🥟
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-base sm:text-xl tracking-tight text-stone-900 whitespace-nowrap">
-                  {settings.storeName || 'ComandaJá'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="font-extrabold text-sm sm:text-xl tracking-tight text-stone-900 truncate">
+                  {isStaffView ? (
+                    <>
+                      <span className="sm:hidden">Cozinha KDS</span>
+                      <span className="hidden sm:inline">{settings.storeName || 'ComandaJá'}</span>
+                    </>
+                  ) : (
+                    settings.storeName || 'ComandaJá'
+                  )}
                 </span>
                 {isStaffView && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                    Cozinha KDS
+                  <span className="inline-flex items-center gap-1 text-[10px] font-black bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-flex flex-shrink-0">
+                    KDS
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-stone-500 hidden sm:block leading-none">
+              <p className="text-[11px] text-stone-500 hidden sm:block leading-none truncate">
                 {settings.storeSubtitle || 'Pastéis Crocantes & Bebidas Geladas'}
               </p>
             </div>
